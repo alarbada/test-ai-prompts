@@ -1,38 +1,47 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
-	"strconv"
+	"strings"
+
+	openai "github.com/sashabaranov/go-openai"
 )
 
 func generateMain() {
-	if len(os.Args) < 4 {
-		fmt.Println("Usage: go run . generate <prompt.json> <testcases.json> [num_cases]")
+	generateCmd := flag.NewFlagSet("generate", flag.ExitOnError)
+	promptFile := generateCmd.String("prompt", "", "prompt config file (required)")
+	testFile := generateCmd.String("testcases", "", "test cases file (required)")
+	numCases := generateCmd.Int("num", 10, "number of test cases to generate")
+
+	generateCmd.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s generate -prompt <file> -testcases <file> [-num <cases>]\n", os.Args[0])
+		generateCmd.PrintDefaults()
+	}
+
+	if err := generateCmd.Parse(os.Args[2:]); err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing flags: %v\n", err)
 		os.Exit(1)
 	}
 
-	promptFile := os.Args[2]
-	testFile := os.Args[3]
-	numCases := 10
-	
-	if len(os.Args) > 4 {
-		if n, err := strconv.Atoi(os.Args[4]); err == nil {
-			numCases = n
-		}
+	if *promptFile == "" || *testFile == "" {
+		generateCmd.Usage()
+		os.Exit(1)
 	}
 
 	// Load prompt config
-	promptConfig, err := loadPromptConfig(promptFile)
+	promptConfig, err := loadPromptConfig(*promptFile)
 	if err != nil {
-		fmt.Printf("Error loading prompt file %s: %v\n", promptFile, err)
+		fmt.Printf("Error loading prompt file %s: %v\n", *promptFile, err)
 		os.Exit(1)
 	}
 
 	// Load existing test cases (if file exists)
 	var existingTestCases []TestCase
-	if testData, err := os.ReadFile(testFile); err == nil {
+	if testData, err := os.ReadFile(*testFile); err == nil {
 		if err := json.Unmarshal(testData, &existingTestCases); err != nil {
 			fmt.Printf("Error parsing existing test cases: %v\n", err)
 			os.Exit(1)
@@ -40,9 +49,9 @@ func generateMain() {
 		fmt.Printf("Found %d existing test cases\n", len(existingTestCases))
 	}
 
-	fmt.Printf("Generating %d new test cases...\n", numCases)
+	fmt.Printf("Generating %d new test cases...\n", *numCases)
 
-	newTestCases, err := generateTestCasesWithPrompt(promptConfig, numCases)
+	newTestCases, err := generateTestCasesWithPrompt(promptConfig, *numCases)
 	if err != nil {
 		fmt.Printf("Error generating test cases: %v\n", err)
 		os.Exit(1)
@@ -57,12 +66,12 @@ func generateMain() {
 		os.Exit(1)
 	}
 
-	if err := os.WriteFile(testFile, data, 0644); err != nil {
+	if err := os.WriteFile(*testFile, data, 0644); err != nil {
 		fmt.Printf("Error writing file: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Generated %d new test cases and saved %d total to %s\n", len(newTestCases), len(allTestCases), testFile)
+	fmt.Printf("Generated %d new test cases and saved %d total to %s\n", len(newTestCases), len(allTestCases), *testFile)
 }
 
 func generateTestCasesWithPrompt(promptConfig PromptConfig, numCases int) ([]TestCase, error) {
@@ -74,7 +83,7 @@ func generateTestCasesWithPrompt(promptConfig PromptConfig, numCases int) ([]Tes
 			break
 		}
 	}
-	
+
 	generationPrompt := fmt.Sprintf(`Given this system prompt: "%s"
 
 Generate %d diverse test cases as JSON array in this exact format:
@@ -87,46 +96,31 @@ Generate %d diverse test cases as JSON array in this exact format:
 
 Make the test cases varied and realistic. Include edge cases and different scenarios that would test the system prompt thoroughly.`, systemPrompt, numCases)
 
-	result, err := callOpenAI(
-		"You are a helpful assistant that generates test cases. Output only valid JSON, no additional text.",
-		generationPrompt,
+	resp, err := client.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model: openai.GPT4Dot1,
+			Messages: []openai.ChatCompletionMessage{
+				{
+					Role:    openai.ChatMessageRoleDeveloper,
+					Content: systemPrompt,
+				},
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: generationPrompt,
+				},
+			},
+		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to call OpenAI API for test generation: %w", err)
 	}
+
+	result := strings.TrimSpace(resp.Choices[0].Message.Content)
 
 	var testCases []TestCase
 	if err := json.Unmarshal([]byte(result), &testCases); err != nil {
-		return nil, fmt.Errorf("failed to parse generated test cases: %v", err)
-	}
-
-	return testCases, nil
-}
-
-func generateTestCases(systemPrompt string, numCases int) ([]TestCase, error) {
-	generationPrompt := fmt.Sprintf(`Given this system prompt: "%s"
-
-Generate %d diverse test cases as JSON array in this exact format:
-[
-  {
-    "input": "example input text",
-    "expected": "expected output"
-  }
-]
-
-Make the test cases varied and realistic. Include edge cases and different scenarios that would test the system prompt thoroughly.`, systemPrompt, numCases)
-
-	result, err := callOpenAI(
-		"You are a helpful assistant that generates test cases. Output only valid JSON, no additional text.",
-		generationPrompt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	var testCases []TestCase
-	if err := json.Unmarshal([]byte(result), &testCases); err != nil {
-		return nil, fmt.Errorf("failed to parse generated test cases: %v", err)
+		return nil, fmt.Errorf("failed to parse generated test cases: %w", err)
 	}
 
 	return testCases, nil

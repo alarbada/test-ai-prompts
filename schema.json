@@ -4,7 +4,6 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$schema": { "type": "string" },
     "model": {
       "type": "string",
       "description": "Model ID used to generate the response"
@@ -167,22 +166,47 @@
       "default": "medium"
     },
     "response_format": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["text", "json_object", "json_schema"]
-        },
-        "json_schema": {
+      "oneOf": [
+        {
           "type": "object",
           "properties": {
-            "name": { "type": "string" },
-            "description": { "type": "string" },
-            "schema": { "$ref": "http://json-schema.org/draft-07/schema#" },
-            "strict": { "type": "boolean" }
-          }
+            "type": { "type": "string", "enum": ["text"] }
+          },
+          "required": ["type"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["json_object"] }
+          },
+          "required": ["type"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["json_schema"] },
+            "json_schema": {
+              "type": "object",
+              "properties": {
+                "name": { 
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9_-]+$",
+                  "maxLength": 64
+                },
+                "description": { "type": "string" },
+                "schema": { "$ref": "http://json-schema.org/draft-07/schema#" },
+                "strict": { "type": "boolean", "default": false }
+              },
+              "required": ["name"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["type", "json_schema"],
+          "additionalProperties": false
         }
-      }
+      ]
     },
     "seed": {
       "type": "integer"

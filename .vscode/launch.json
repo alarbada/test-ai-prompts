@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "args": [
+                "generate",
+                "-prompt", "data/ai_form_filler.yaml",
+                "-testcases", "data/test_ai_form_filler.json",
+                "-num", "10"
+            ],
+            "program": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ],
+    "compounds": []
+}
