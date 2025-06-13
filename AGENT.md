@@ -12,6 +12,7 @@ This is an OpenAI prompt testing tool with two main functions:
 ## Code Style & Conventions
 - Standard Go formatting (`gofmt`)
 - Try to use fmt.Errorf when returning errors to add more context
+- Prefer using `any` instead of `interface{}`
 - Struct tags use both `json` and `yaml` for dual format support
 - Error handling: Return errors, use `log.Fatal` for critical failures
 - OpenAI API integration via `github.com/sashabaranov/go-openai`

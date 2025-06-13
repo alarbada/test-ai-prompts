@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "debug generate",
             "type": "go",
             "request": "launch",
-            "mode": "auto",
+            "mode": "debug",
             "args": [
                 "generate",
                 "-prompt", "data/ai_form_filler.yaml",
@@ -14,7 +14,20 @@
             ],
             "program": "${workspaceFolder}",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "name": "debug test",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "args": [
+                "test",
+                "-prompt", "data/ai_form_filler.yaml",
+                "-testcases", "data/test_ai_form_filler.yaml",
+                "-eval", "json"
+            ],
+            "program": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env"
         }
     ],
-    "compounds": []
 }

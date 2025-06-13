@@ -23,7 +23,13 @@ func newOpenaiClient() *openai.Client {
 var client = newOpenaiClient()
 
 func callOpenAIWithPrompt(promptConfig PromptConfig, input string) (string, error) {
-	resp, err := client.CreateChatCompletion(context.Background(), promptConfig.ChatCompletionRequest)
+	req := promptConfig.ChatCompletionRequest
+	req.Messages = append(req.Messages, openai.ChatCompletionMessage{
+		Role:    "user",
+		Content: input,
+	})
+
+	resp, err := client.CreateChatCompletion(context.Background(), req)
 	if err != nil {
 		return "", fmt.Errorf("failed to call OpenAI API: %w", err)
 	}
