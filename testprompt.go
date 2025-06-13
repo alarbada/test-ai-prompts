@@ -200,25 +200,17 @@ func runMain() error {
 		return fmt.Errorf("index %d out of range (0-%d)", index, len(testCases)-1)
 	}
 
-	// Create evaluator based on type
-	var evaluator Evaluator
-	switch *evalType {
-	case "json":
-		evaluator = JSONEvaluator{}
-	case "strict":
-		evaluator = StrictEvaluator{}
-	default:
-		return fmt.Errorf("unknown evaluation type: %s (use 'strict' or 'json')", *evalType)
-	}
-
 	fmt.Printf("Running test case %d (eval: %s):\n", index, *evalType)
 	testCase := testCases[index]
 
-	result := runTestWithPrompt(testCase, promptConfig, evaluator)
-	if result {
-		fmt.Printf("✓ Test case %d PASSED\n", index)
-	} else {
-		fmt.Printf("✗ Test case %d FAILED\n", index)
+	result, err := callOpenAIWithPrompt(promptConfig, testCase.Input)
+	if err != nil {
+		return err
 	}
+
+	fmt.Printf("Input: %s\n", testCase.Input)
+	fmt.Printf("Expected: %s\n", testCase.Expected)
+	fmt.Printf("Got: %s\n", result)
+
 	return nil
 }
