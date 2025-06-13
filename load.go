@@ -61,17 +61,25 @@ func loadPromptConfig(filename string) (PromptConfig, error) {
 	case ".yaml", ".yml":
 		yamlConfig := map[string]any{}
 		err = yaml.Unmarshal(data, &yamlConfig)
-		if err != nil { return config, err }
+		if err != nil {
+			return config, err
+		}
 
 		bs, err := json.Marshal(yamlConfig)
-		if err != nil { return config, err }
+		if err != nil {
+			return config, err
+		}
 
 		err = json.Unmarshal(bs, &config)
-		if err != nil { return config, err }
+		if err != nil {
+			return config, err
+		}
 
 	case ".json":
 		err = json.Unmarshal(data, &config)
-		if err != nil { return config, err }
+		if err != nil {
+			return config, err
+		}
 	default:
 		return config, fmt.Errorf("unsupported file format: %s (use .json, .yaml, or .yml)", ext)
 	}

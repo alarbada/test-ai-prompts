@@ -36,18 +36,27 @@ func main() {
 		fmt.Println("Usage:")
 		fmt.Println("  go run . generate -prompt <file> -testcases <file> [-num <cases>] - generate test cases")
 		fmt.Println("  go run . test -prompt <file> -testcases <file> - run tests with custom prompt")
+		fmt.Println("  go run . run -prompt <file> -testcases <file> -index <n> - run single test case")
 		os.Exit(1)
 	}
 
+	var err error
 	command := os.Args[1]
 	switch command {
 	case "generate":
-		generateMain()
+		err = generateMain()
 	case "test":
-		testMain()
+		err = testMain()
+	case "run":
+		err = runMain()
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
-		fmt.Println("Available commands: generate, test")
+		fmt.Println("Available commands: generate, test, run")
+		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }

@@ -1,0 +1,129 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  wraperr:
+    # Enable all checks for comprehensive error wrapping analysis
+    # This will catch fmt.Errorf usage without %w verb
+    check-fmt-errorf: true
+    check-error-new: true
+    check-errors-new: true
+  
+  govet:
+    # Enable more checks than default
+    enable-all: true
+    disable:
+      - fieldalignment # Can be too strict for simple structs
+  
+  gocyclo:
+    min-complexity: 15
+  
+  gofmt:
+    simplify: true
+  
+  goimports:
+    local-prefixes: github.com/alarbada/test-ai-prompts
+  
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - commentedOutCode # Allow commented code for documentation
+      - whyNoLint # Don't require explanation for every nolint
+  
+  gosec:
+    excludes:
+      - G304 # File path provided as taint input - we read user-specified files
+  
+  revive:
+    rules:
+      - name: exported
+        disabled: true # Allow unexported returns in exported functions
+      - name: package-comments
+        disabled: true # Don't require package comments for main package
+
+linters:
+  enable:
+    # Error handling and correctness
+    - wraperr          # Main focus: catch unwrapped errors
+    - errcheck         # Check that errors are handled
+    - govet            # Official Go static analyzer
+    - ineffassign      # Detect ineffectual assignments
+    - typecheck        # Type-check Go code
+    
+    # Code style and formatting
+    - gofmt            # Format Go code
+    - goimports        # Manage imports
+    - gosimple         # Simplify Go code
+    - unused           # Find unused constants, variables, functions and types
+    - staticcheck      # Go static analysis, many checks
+    
+    # Performance and best practices
+    - gocritic         # Comprehensive Go linter with many rules
+    - gosec            # Security-focused linter
+    - misspell         # Find misspelled English words
+    - unconvert        # Remove unnecessary type conversions
+    - unparam          # Find unused function parameters
+    
+    # Style and maintainability
+    - gocyclo          # Check cyclomatic complexity
+    - revive           # Replacement for golint with more rules
+    - whitespace       # Detect whitespace issues
+  
+  disable:
+    - exhaustive       # Can be too strict for this codebase
+    - exhaustivestruct # Too strict for external structs
+    - gochecknoglobals # Globals may be acceptable in main packages
+    - gochecknoinits   # Init functions may be needed
+    - godot            # Don't require periods in comments
+    - gomnd            # Magic number detection can be too strict
+    - lll              # Line length can be flexible
+    - nestif           # Nested if complexity - can be addressed case by case
+    - nlreturn         # Newline requirements can be too strict
+    - testpackage      # Allow tests in same package
+    - wsl              # Whitespace linter can be too opinionated
+
+issues:
+  exclude-rules:
+    # Allow fmt.Printf in main functions for CLI output
+    - path: main\.go
+      linters:
+        - forbidigo
+    
+    # Allow long lines in generated code or embedded data
+    - path: schema\.json
+      linters:
+        - lll
+  
+  # Don't skip vendor, third_party, testdata, examples, Godeps, builtin
+  skip-dirs-use-default: true
+  
+  # Maximum issues count per one linter
+  max-issues-per-linter: 0
+  
+  # Maximum count of issues with the same text
+  max-same-issues: 0
+
+severity:
+  # Default severity for all rules
+  default-severity: error
+  
+  # Specific severity overrides
+  rules:
+    - linters:
+        - revive
+      severity: warning
+    - linters:
+        - gosec
+      severity: warning

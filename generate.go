@@ -11,7 +11,7 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
-func generateMain() {
+func generateMain() error {
 	generateCmd := flag.NewFlagSet("generate", flag.ExitOnError)
 	promptFile := generateCmd.String("prompt", "", "prompt config file (required)")
 	testFile := generateCmd.String("testcases", "", "test cases file (required)")
@@ -23,28 +23,26 @@ func generateMain() {
 	}
 
 	if err := generateCmd.Parse(os.Args[2:]); err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing flags: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("parsing flags: %w", err)
 	}
 
 	if *promptFile == "" || *testFile == "" {
 		generateCmd.Usage()
-		os.Exit(1)
+		return fmt.Errorf("missing required flags: prompt and testcases are required")
 	}
 
 	// Load prompt config
 	promptConfig, err := loadPromptConfig(*promptFile)
 	if err != nil {
-		fmt.Printf("Error loading prompt file %s: %v\n", *promptFile, err)
-		os.Exit(1)
+		return fmt.Errorf("loading prompt file %s: %w", *promptFile, err)
 	}
 
 	// Load existing test cases (if file exists)
 	var existingTestCases []TestCase
-	if testData, err := os.ReadFile(*testFile); err == nil {
-		if err := json.Unmarshal(testData, &existingTestCases); err != nil {
-			fmt.Printf("Error parsing existing test cases: %v\n", err)
-			os.Exit(1)
+	if _, err := os.Stat(*testFile); err == nil {
+		existingTestCases, err = loadTestCases(*testFile)
+		if err != nil {
+			return fmt.Errorf("loading existing test cases: %w", err)
 		}
 		fmt.Printf("Found %d existing test cases\n", len(existingTestCases))
 	}
@@ -53,8 +51,7 @@ func generateMain() {
 
 	newTestCases, err := generateTestCasesWithPrompt(promptConfig, *numCases)
 	if err != nil {
-		fmt.Printf("Error generating test cases: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("generating test cases: %w", err)
 	}
 
 	// Combine existing and new test cases
@@ -62,16 +59,15 @@ func generateMain() {
 
 	data, err := json.MarshalIndent(allTestCases, "", "  ")
 	if err != nil {
-		fmt.Printf("Error marshaling test cases: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("marshaling test cases: %w", err)
 	}
 
 	if err := os.WriteFile(*testFile, data, 0644); err != nil {
-		fmt.Printf("Error writing file: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("writing file %s: %w", *testFile, err)
 	}
 
 	fmt.Printf("Generated %d new test cases and saved %d total to %s\n", len(newTestCases), len(allTestCases), *testFile)
+	return nil
 }
 
 func generateTestCasesWithPrompt(promptConfig PromptConfig, numCases int) ([]TestCase, error) {
