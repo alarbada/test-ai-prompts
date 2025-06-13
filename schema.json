@@ -1,0 +1,284 @@
+
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "model": {
+      "type": "string",
+      "description": "Model ID used to generate the response"
+    },
+    "messages": {
+      "type": "array",
+      "description": "A list of messages comprising the conversation so far",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["system", "user", "assistant", "developer", "tool"]
+          },
+          "content": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "null" },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": { "type": "string" },
+                    "text": { "type": "string" },
+                    "image_url": {
+                      "type": "object",
+                      "properties": {
+                        "url": { "type": "string" },
+                        "detail": { "type": "string", "enum": ["low", "high", "auto"] }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "name": { "type": "string" },
+          "tool_calls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "type": { "type": "string", "enum": ["function"] },
+                "function": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "arguments": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "tool_call_id": { "type": "string" }
+        },
+        "required": ["role"]
+      }
+    },
+    "audio": {
+      "type": "object",
+      "properties": {
+        "voice": { "type": "string", "enum": ["alloy", "echo", "fable", "onyx", "nova", "shimmer"] },
+        "format": { "type": "string", "enum": ["wav", "mp3", "flac", "opus"] }
+      }
+    },
+    "frequency_penalty": {
+      "type": "number",
+      "minimum": -2.0,
+      "maximum": 2.0,
+      "default": 0
+    },
+    "function_call": {
+      "deprecated": true,
+      "oneOf": [
+        { "type": "string", "enum": ["none", "auto"] },
+        {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "functions": {
+      "deprecated": true,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "parameters": { "type": "object" }
+        }
+      }
+    },
+    "logit_bias": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": -100,
+        "maximum": 100
+      }
+    },
+    "logprobs": {
+      "type": "boolean",
+      "default": false
+    },
+    "max_completion_tokens": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "max_tokens": {
+      "deprecated": true,
+      "type": "integer",
+      "minimum": 1
+    },
+    "metadata": {
+      "type": "object",
+      "maxProperties": 16,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 512
+      }
+    },
+    "modalities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["text", "audio"]
+      }
+    },
+    "n": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "parallel_tool_calls": {
+      "type": "boolean",
+      "default": true
+    },
+    "prediction": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["content"] },
+        "content": { "type": "string" }
+      }
+    },
+    "presence_penalty": {
+      "type": "number",
+      "minimum": -2.0,
+      "maximum": 2.0,
+      "default": 0
+    },
+    "reasoning_effort": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "default": "medium"
+    },
+    "response_format": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["text", "json_object", "json_schema"]
+        },
+        "json_schema": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "schema": { "$ref": "http://json-schema.org/draft-07/schema#" },
+            "strict": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "service_tier": {
+      "type": "string",
+      "enum": ["auto", "default", "flex"],
+      "default": "auto"
+    },
+    "stop": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" },
+          "maxItems": 4
+        },
+        { "type": "null" }
+      ]
+    },
+    "store": {
+      "type": "boolean",
+      "default": false
+    },
+    "stream": {
+      "type": "boolean",
+      "default": false
+    },
+    "stream_options": {
+      "type": "object",
+      "properties": {
+        "include_usage": { "type": "boolean" }
+      }
+    },
+    "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "default": 1
+    },
+    "tool_choice": {
+      "oneOf": [
+        { "type": "string", "enum": ["none", "auto", "required"] },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["function"] },
+            "function": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "tools": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["function"] },
+          "function": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "parameters": { "type": "object" },
+              "strict": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "top_logprobs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "top_p": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 1
+    },
+    "user": {
+      "type": "string"
+    },
+    "web_search_options": {
+      "type": "object",
+      "properties": {
+        "enable": { "type": "boolean" }
+      }
+    }
+  },
+  "required": ["model", "messages"]
+}
