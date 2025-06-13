@@ -1,6 +1,6 @@
 
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -196,7 +196,7 @@
                   "maxLength": 64
                 },
                 "description": { "type": "string" },
-                "schema": { "$ref": "http://json-schema.org/draft-07/schema#" },
+                "schema": { "$ref": "https://json-schema.org/draft-07/schema#" },
                 "strict": { "type": "boolean", "default": false }
               },
               "required": ["name"],

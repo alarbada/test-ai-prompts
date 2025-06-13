@@ -158,6 +158,71 @@ func testMain() error {
 	return nil
 }
 
+func evalMain(evalFile string) error {
+	// Load eval config
+	evalConfig, err := loadEvalConfig(evalFile)
+	if err != nil {
+		return fmt.Errorf("loading eval file %s: %w", evalFile, err)
+	}
+
+	fmt.Printf("Running evaluation: %s\n", evalConfig.Name)
+	fmt.Printf("Found %d test suites\n\n", len(evalConfig.Tests))
+
+	totalPassed := 0
+	totalTests := 0
+
+	for _, test := range evalConfig.Tests {
+		fmt.Printf("=== Running %s ===\n", test.Name)
+
+		// Load prompt config
+		promptConfig, err := loadPromptConfig(test.Prompt)
+		if err != nil {
+			return fmt.Errorf("loading prompt file %s: %w", test.Prompt, err)
+		}
+
+		// Load test cases
+		testCases, err := loadTestCases(test.Samples)
+		if err != nil {
+			return fmt.Errorf("loading test cases %s: %w", test.Samples, err)
+		}
+
+		// Create evaluator based on type
+		var evaluator Evaluator
+		evalType := test.EvalType
+		if evalType == "" {
+			evalType = "strict"
+		}
+
+		switch evalType {
+		case "json":
+			evaluator = JSONEvaluator{}
+		case "strict":
+			evaluator = StrictEvaluator{}
+		default:
+			return fmt.Errorf("unknown evaluation type: %s (use 'strict' or 'json')", evalType)
+		}
+
+		fmt.Printf("Running %d test cases (eval: %s):\n\n", len(testCases), evalType)
+
+		passed := 0
+		for i, testCase := range testCases {
+			fmt.Printf("Test %d:\n", i+1)
+			if runTestWithPrompt(testCase, promptConfig, evaluator) {
+				passed++
+			}
+		}
+
+		fmt.Printf("Suite Results: %d/%d tests passed\n", passed, len(testCases))
+		fmt.Printf("=== %s Complete ===\n\n", test.Name)
+
+		totalPassed += passed
+		totalTests += len(testCases)
+	}
+
+	fmt.Printf("Overall Results: %d/%d tests passed\n", totalPassed, totalTests)
+	return nil
+}
+
 func runMain() error {
 	runCmd := flag.NewFlagSet("run", flag.ExitOnError)
 	promptFile := runCmd.String("prompt", "", "prompt config file (required)")

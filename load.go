@@ -86,3 +86,31 @@ func loadPromptConfig(filename string) (PromptConfig, error) {
 
 	return config, nil
 }
+
+type Test struct {
+	Name     string `yaml:"name"`
+	Prompt   string `yaml:"prompt"`
+	Samples  string `yaml:"samples"`
+	EvalType string `yaml:"eval_type,omitempty"`
+}
+
+type EvalConfig struct {
+	Name  string `yaml:"name"`
+	Tests []Test `yaml:"tests"`
+}
+
+func loadEvalConfig(filename string) (EvalConfig, error) {
+	var config EvalConfig
+
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return config, fmt.Errorf("failed to read file %s: %w", filename, err)
+	}
+
+	err = yaml.Unmarshal(data, &config)
+	if err != nil {
+		return config, fmt.Errorf("failed to parse YAML eval config: %w", err)
+	}
+
+	return config, nil
+}

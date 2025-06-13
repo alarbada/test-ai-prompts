@@ -41,24 +41,18 @@ func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage:")
 		fmt.Println("  go run . generate -prompt <file> -testcases <file> [-num <cases>] - generate test cases")
-		fmt.Println("  go run . test -prompt <file> -testcases <file> - run tests with custom prompt")
-		fmt.Println("  go run . run -prompt <file> -testcases <file> -index <n> - run single test case")
+		fmt.Println("  go run . <eval-file.yaml> - run evaluation")
 		os.Exit(1)
 	}
 
 	var err error
 	command := os.Args[1]
-	switch command {
-	case "generate":
+
+	if command == "generate" {
 		err = generateMain()
-	case "test":
-		err = testMain()
-	case "run":
-		err = runMain()
-	default:
-		fmt.Printf("Unknown command: %s\n", command)
-		fmt.Println("Available commands: generate, test, run")
-		os.Exit(1)
+	} else {
+		// Assume it's an eval file
+		err = evalMain(command)
 	}
 
 	if err != nil {

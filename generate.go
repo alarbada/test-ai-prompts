@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
+	"gopkg.in/yaml.v3"
 )
 
 func generateMain() error {
@@ -57,7 +58,7 @@ func generateMain() error {
 	// Combine existing and new test cases
 	allTestCases := append(existingTestCases, newTestCases...)
 
-	data, err := json.MarshalIndent(allTestCases, "", "  ")
+	data, err := yaml.Marshal(allTestCases)
 	if err != nil {
 		return fmt.Errorf("marshaling test cases: %w", err)
 	}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Evaluation Configuration Schema",
+  "description": "Schema for AI prompt evaluation configuration files",
+  "required": ["name", "tests"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the evaluation"
+    },
+    "tests": {
+      "type": "array",
+      "description": "List of test suites to run",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "prompt", "samples"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the test suite"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Path to the prompt configuration file (YAML)",
+            "pattern": "\\.(yaml|yml)$"
+          },
+          "samples": {
+            "type": "string", 
+            "description": "Path to the test samples file (YAML)",
+            "pattern": "\\.(yaml|yml)$"
+          },
+          "eval_type": {
+            "type": "string",
+            "description": "Evaluation method to use",
+            "enum": ["strict", "json"],
+            "default": "strict"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
